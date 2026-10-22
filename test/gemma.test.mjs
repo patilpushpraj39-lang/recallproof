@@ -34,6 +34,19 @@ test('a truncated generation is not accepted as a completed pack', async () => {
   }), error => error.status === 502);
 });
 
+test('provider failures distinguish configuration rejection from temporary errors without copying diagnostics', async () => {
+  for (const status of [400, 404, 500, 502, 503, 504]) {
+    await assert.rejects(generateStudyPack({ notes: 'notes', apiKey: 'secret', fetchImpl: async () =>
+      new Response('private diagnostic secret', { status }) }), error => {
+      assert.equal(error.status, 502);
+      assert.match(error.message, new RegExp(`HTTP ${status}`));
+      assert.equal(error.message.includes('secret'), false);
+      assert.equal(error.message.includes('30 seconds'), status >= 500);
+      return true;
+    });
+  }
+});
+
 test('connection failures receive a useful message without leaking raw error text', async () => {
   await assert.rejects(generateStudyPack({ notes: 'notes', apiKey: 'secret', fetchImpl: async () => {
     throw new Error('sensitive provider error secret');

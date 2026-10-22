@@ -43,7 +43,7 @@ test('feedback HTTP route validates evidence and never exposes its private key',
     assert.equal(result.sources.length, 2);
     assert.equal(JSON.stringify(result).includes('private-test-key'), false);
     assert.equal(result.schemaVersion, 3);
-    for (const asset of ['/practice.mjs', '/session.mjs', '/dom.mjs']) assert.equal((await fetch(`${url}${asset}`)).status, 200);
+    for (const asset of ['/practice.mjs', '/session.mjs', '/dom.mjs', '/export.mjs']) assert.equal((await fetch(`${url}${asset}`)).status, 200);
   });
 });
 

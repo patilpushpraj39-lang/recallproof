@@ -66,9 +66,15 @@ Automated tests use synthetic data and mocked model responses. They cover invali
 
 ## Graphify
 
-Map the actual project using Graphify. `.graphifyignore` includes both the application and its genuine tests while excluding development backups and generated output. Inspect the paths from `createRecallServer` to generation/evidence checking and from answer review through the shared Gemma client and source validation. Confirm these relationships actually appear before presenting them. No node or edge counts are claimed until a Graphify extraction succeeds. Generated graphs are ignored by Git by default. Follow the representative's instructions about eligible graph scope and submission.
+Map the actual project using Graphify. `.graphifyignore` scopes local extraction to application and genuine test code, excluding backups and generated output; hosted indexing can use different coverage. The participant connected this repository to Graphify Cloud and supplied a successful graph-view screenshot reporting 100 nodes and 185 edges (183 extracted and 2 inferred) for the earlier practice upgrade. Those are observed snapshot counts, not a guaranteed current count or a judging score. Confirm the indexed commit and actual relationships before presenting them. Follow the representative's instructions about eligible graph scope and submission.
 
-The current Windows installation blocked the unsigned `graphify.exe` launcher. An approved vendor/organizer installation or hosted mapping route is pending; no security policy was disabled and no substitute graph is presented as Graphify output.
+Windows Application Control blocked the local `graphify.exe` launcher. The hosted workflow succeeded without changing that security policy.
+
+## Reliability and session report
+
+Version 0.3 retains a completed pack, checked attempts and drafts if regenerating the same notes fails. Editing notes intentionally clears the current session. Correcting the final flagged card restores all cards rather than leaving a stale filtered view. Provider errors include the numeric HTTP status without exposing raw diagnostics, keys or notes; there are no automatic model retries.
+
+Use **Download session (.txt)** to explicitly save notes, summaries, suggested answers, source passages and the latest ten checked attempts per question as plain text. Unsubmitted drafts are excluded. The report labels model feedback and assistance; it is not an objective grade or evidence of independent mastery. Download generation happens in the browser and makes no extra model request. This is a readable report, not an importable backup; refreshing the page still clears session memory. Keep any report containing private notes private. The key is not included in the report.
 
 ## Model, dependencies and assistance
 

@@ -30,12 +30,13 @@
         <div class="input-meta"><button id="sample" type="button" class="text-button">Try sample notes ↗</button><span id="character-count">0 / 12,000</span></div>
         <button id="generate" type="button" class="primary-button" disabled>Create my study pack <span aria-hidden="true">→</span></button>
         <p class="helper" id="notes-help">Gemma aims for three questions. Shorter notes may support fewer.</p>
-        <p class="privacy">Your notes and submitted answers are sent to Google’s Gemini API to run Gemma. This app does not save them or your API key to disk.</p>
+        <p class="privacy">Your notes and submitted answers are sent to Google’s Gemini API to run Gemma. Nothing is saved automatically. You can explicitly download a session report; your API key is never included.</p>
         <div id="source-panel" class="source-panel" hidden><div class="source-heading"><h3>Evidence in your notes</h3><button id="close-source" type="button" class="text-button">Close</button></div><p id="source-text"></p></div>
       </section>
 
       <section class="panel result-panel" aria-labelledby="result-title" aria-busy="false">
         <div class="panel-heading"><div><p class="eyebrow">YOUR NEXT STUDY SESSION</p><h2 id="result-title">Recall, with receipts</h2></div><span class="number-tag">02</span></div>
+        <div id="session-actions" hidden><button id="download-session" type="button" class="text-button" disabled>Download session (.txt) ↓</button><p class="helper">Includes your notes, suggested answers and checked attempts. Unsubmitted drafts are excluded. Refresh still clears this page.</p></div>
         <div id="error" class="error-message" role="alert" hidden></div>
         <div id="empty-state" class="empty-state"><div class="paper-stack" aria-hidden="true"><span class="paper-back"></span><div class="paper-front"><span class="mini-check">✓</span><span class="paper-line long"></span><span class="paper-line"></span><span class="paper-line short"></span></div></div><h3>A little less “I think I know this.”</h3><p>Add notes on the left. Your summary and revision cards will appear here.</p><span class="empty-tag">Powered by Gemma 4 · Checked against your notes</span></div>
         <div id="loading" class="loading-state" role="status" hidden><span class="spinner" aria-hidden="true"></span><h3>Building your study pack</h3><p>Gemma is reading your notes. Then we’ll check its source references and retrieve the original passages.</p><span id="elapsed">0 seconds</span></div>

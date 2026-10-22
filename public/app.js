@@ -1,6 +1,7 @@
 import { element } from './dom.mjs';
 import { renderPracticeCard } from './practice.mjs';
 import { createPracticeSession, practiceProgress, reviewQueue } from './session.mjs';
+import { buildRevisionReport } from './export.mjs';
 
 const $ = id => document.getElementById(id);
 const notes = $('notes');
@@ -10,6 +11,7 @@ let configured = false;
 let sourceNotes = '';
 let practiceSession = null;
 let onlyFlagged = false;
+let currentPack = null;
 
 const SAMPLE = `Python lists and tuples store items in order.
 A list uses square brackets, for example [10, 20, 30].
@@ -24,9 +26,11 @@ function updateInput() {
 }
 
 function resetResults() {
+  currentPack = null;
   practiceSession = null;
   onlyFlagged = false;
   $('results').hidden = true;
+  $('session-actions').hidden = true;
   $('source-panel').hidden = true;
   $('empty-state').hidden = false;
   $('error').hidden = true;
@@ -37,6 +41,7 @@ function setPracticeBusy(value) {
   working = value;
   notes.disabled = value;
   $('sample').disabled = value;
+  $('download-session').disabled = value || !currentPack;
   for (const button of document.querySelectorAll('.check-answer')) {
     button.disabled = value || !button.closest('form').querySelector('textarea').value.trim();
   }
@@ -47,6 +52,10 @@ function setPracticeBusy(value) {
 function updatePracticeProgress() {
   if (!practiceSession) return;
   const progress = practiceProgress(practiceSession);
+  if (progress.flagged === 0) onlyFlagged = false;
+  const flagged = new Set(reviewQueue(practiceSession));
+  for (const card of document.querySelectorAll('.practice-card')) card.hidden = onlyFlagged && !flagged.has(Number(card.dataset.cardIndex));
+  $('review-filter').textContent = onlyFlagged ? 'Show all cards' : 'Review flagged cards';
   $('practice-progress').textContent = `${progress.attempted}/${progress.total} attempted · ${progress.flagged} flagged for review${progress.priority ? ` · ${progress.priority} felt-sure flags` : ''}`;
   $('review-filter').disabled = !onlyFlagged && progress.flagged === 0;
 }
@@ -54,10 +63,17 @@ function updatePracticeProgress() {
 $('review-filter').addEventListener('click', () => {
   if (!practiceSession) return;
   onlyFlagged = !onlyFlagged;
-  const flagged = new Set(reviewQueue(practiceSession));
-  for (const card of document.querySelectorAll('.practice-card')) card.hidden = onlyFlagged && !flagged.has(Number(card.dataset.cardIndex));
-  $('review-filter').textContent = onlyFlagged ? 'Show all cards' : 'Review flagged cards';
   updatePracticeProgress();
+});
+
+$('download-session').addEventListener('click', () => {
+  if (!currentPack || working) return;
+  const report = buildRevisionReport({ notes: sourceNotes, pack: currentPack, session: practiceSession });
+  const url = URL.createObjectURL(new Blob([report], { type: 'text/plain;charset=utf-8' }));
+  const link = document.createElement('a');
+  link.href = url; link.download = 'recallproof-session.txt';
+  document.body.append(link); link.click(); link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 });
 
 notes.addEventListener('input', () => { resetResults(); updateInput(); });
@@ -119,14 +135,16 @@ function renderStudyPack(pack) {
       onSource: showSource, setBusy: setPracticeBusy, onProgress: updatePracticeProgress }));
   });
   $('results').hidden = false;
+  currentPack = pack;
+  $('session-actions').hidden = false;
   updatePracticeProgress();
 }
 
 generate.addEventListener('click', async () => {
   if (working || !configured || notes.value.trim().length < 60) return;
-  working = true;
+  if (!setPracticeBusy(true)) return;
   sourceNotes = notes.value.trim();
-  resetResults();
+  $('error').hidden = true;
   $('empty-state').hidden = true;
   $('loading').hidden = false;
   document.querySelector('.result-panel').setAttribute('aria-busy', 'true');
@@ -149,12 +167,10 @@ generate.addEventListener('click', async () => {
     $('error').textContent = error.name === 'TimeoutError' ? 'The request timed out. Check your connection and try again.' :
       error instanceof TypeError ? 'The local server could not be reached. Check that it is still running in your terminal.' : error.message;
     $('error').hidden = false;
-    $('empty-state').hidden = false;
+    $('empty-state').hidden = Boolean(currentPack);
   } finally {
     clearInterval(timer);
-    working = false;
-    notes.disabled = false;
-    $('sample').disabled = false;
+    setPracticeBusy(false);
     generate.textContent = 'Create my study pack →';
     $('loading').hidden = true;
     document.querySelector('.result-panel').setAttribute('aria-busy', 'false');

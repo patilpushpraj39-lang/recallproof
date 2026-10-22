@@ -20,8 +20,8 @@ This record distinguishes automated synthetic checks from a live Gemma demonstra
 
 - Narrow-screen layout and broader live failure/limited-note cases.
 - Full manual semantic review of all generated answers and their selected passages; source-reference counts alone are not an accuracy measure.
-- Graphify extraction of this actual project.
-- Live acceptance of the answer-feedback-retry upgrade.
+- Current Graphify indexed-commit and graph-scope confirmation; the participant supplied a successful earlier hosted graph screenshot as recorded below.
+- Broader live feedback cases, including absent claims and confidence-priority behavior; two participant-run answer cases are recorded below.
 - Event submission acceptance.
 
 ## Demo cases to record honestly
@@ -65,4 +65,21 @@ Never present a mocked response or synthetic test as a live Gemma result. Source
 - Version 0.2 adds typed answer practice, student confidence, source-linked Gemma feedback, a review-priority flag, retries, assisted-attempt context and an in-memory review queue. It uses the existing Gemma model and shared transport; no new service or secret storage is introduced.
 - All 32 current automated tests passed after the upgrade. These use synthetic inputs and mocked provider responses and do not establish live feedback quality.
 - A temporary test server on port 4174 used clearly labelled SIMULATED UI TEST responses, no real key and no external model calls. Browser checks verified answer submission, confidence selection, feedback rendering, exact source highlighting, flagged-card filtering and a retry changing the progress display from one review flag to zero. This is synthetic interface evidence, not a live Gemma demonstration.
-- Live feedback must still be checked with the participant's private key after restarting the app: a correct paraphrase, a reversal of list/tuple properties, and a claim absent from the notes. Source-reference checks cannot prove that Gemma's feedback verdict is correct.
+- At the time of the 0.2 release, live feedback was pending. Subsequent participant-run checks are recorded below. Source-reference checks cannot prove that Gemma's feedback verdict is correct.
+
+## Participant screenshots after the 0.2 release
+
+- Graphify Cloud indexed `patilpushpraj39-lang/recallproof`. The dashboard showed 88 nodes; a later graph view showed 100 nodes and 185 edges: 183 extracted, 2 inferred, zero synthesized and zero observed. The reason for the dashboard/graph count difference was not verified. These are participant-supplied screenshot observations, not a locally generated graph, an audited coverage result or guaranteed current counts. The indexed commit was not visible in those screenshots.
+- The participant restarted the real application. A Python notes screenshot showed 6/6 references and the new answer form. Submitting deliberately reversed list/tuple facts produced conflicting feedback and the actual list/tuple source passages, with one review flag.
+- The confidence selector in that screenshot was unsure. It did not validate the felt-sure priority warning.
+- A correct paraphrase initially failed with the generic provider-error message. One manual retry later returned supported feedback and the relevant original passages. This is evidence of a successful retry, not proof of the precise upstream failure cause or general availability.
+- Only these two live answer cases have been seen. No general semantic-accuracy or learning-outcome claim is made. Event submission has not opened according to the participant.
+
+## Version 0.3 reliability and export
+
+- Before editing, nine changed existing files were backed up under ignored `work/before-reliability-export/` and verified by SHA-256.
+- Completed packs and practice attempts are retained on failed same-notes regeneration. Editing notes still intentionally clears the session. A corrected final flagged answer restores all cards.
+- An explicit plain-text session export includes original notes, generated content, sources and checked attempt history; it selects fields rather than serializing transport objects. It excludes unsubmitted drafts and credentials. There is no automatic persistence or import feature.
+- Provider HTTP status categories are shown without copying diagnostic bodies. A previous generic error cannot be retroactively attributed to a particular status.
+- All 35 automated tests passed, including new credential-exclusion/report and provider-status checks. These use synthetic inputs and mocked providers.
+- On a labelled synthetic preview at port 4174, browser checks confirmed that a forced regeneration error left the existing summary, questions, typed answer, feedback and progress intact. A correction while viewing flagged cards cleared the flag and restored all three cards. The export button was clicked; the browser's downloaded-file arrival has not yet been independently confirmed. The report builder contents were verified by automated tests.

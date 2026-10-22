@@ -10,7 +10,8 @@ const ASSETS = new Map([
   ['/app.js', ['app.js', 'text/javascript; charset=utf-8']],
   ['/dom.mjs', ['dom.mjs', 'text/javascript; charset=utf-8']],
   ['/practice.mjs', ['practice.mjs', 'text/javascript; charset=utf-8']],
-  ['/session.mjs', ['session.mjs', 'text/javascript; charset=utf-8']]
+  ['/session.mjs', ['session.mjs', 'text/javascript; charset=utf-8']],
+  ['/export.mjs', ['export.mjs', 'text/javascript; charset=utf-8']]
 ]);
 
 function respondJson(response, status, body) {
