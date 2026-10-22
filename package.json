@@ -1,6 +1,6 @@
 {
   "name": "recallproof",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "private": true,
   "type": "module",
   "description": "Evidence-linked revision cards powered by Gemma 4.",

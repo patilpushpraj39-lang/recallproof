@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { validateQuestionInput, verifyNoteAnswer, answerFromNotes } from '../lib/ask.mjs';
+import { resolveSources, buildSourcePassages } from '../lib/evidence.mjs';
 
 const notes = 'A list can be changed after creation. A tuple cannot be changed after creation.';
 
@@ -28,6 +29,29 @@ test('invalid source references withhold the whole note answer', () => {
   assert.equal(result.withheld, true);
   assert.equal(result.answer.includes('A claim to withhold.'), false);
   assert.deepEqual(result.sources, []);
+  assert.equal(result.referenceIssue, 'invalid_source');
+});
+
+test('notes answers can cite six genuine passages without changing the short-card limit', () => {
+  const sourceNotes = 'First fact. Second fact. Third fact. Fourth fact. Fifth fact. Sixth fact. Seventh fact.';
+  const sourceIds = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6'];
+  const result = verifyNoteAnswer({ covered: true, answer: 'A comparison requiring several passages.', sourceIds }, sourceNotes);
+  assert.equal(result.withheld, false);
+  assert.equal(result.sources.length, 6);
+  assert.equal(resolveSources({ sourceIds }, new Map(buildSourcePassages(sourceNotes).map(source => [source.id, source]))).matched, false);
+  const excessive = verifyNoteAnswer({ covered: true, answer: 'Do not show this claim.', sourceIds: [...sourceIds, 'S7'] }, sourceNotes);
+  assert.equal(excessive.withheld, true);
+  assert.equal(excessive.referenceIssue, 'too_many_sources');
+  assert.equal(excessive.answer.includes('Do not show this claim.'), false);
+});
+
+test('missing source lists are distinguished from invalid IDs', () => {
+  for (const sourceIds of [undefined, [], 'S1']) {
+    const result = verifyNoteAnswer({ covered: true, answer: 'Do not show this claim.', sourceIds }, notes);
+    assert.equal(result.referenceIssue, 'missing_sources');
+    assert.equal(result.withheld, true);
+    assert.equal(result.answer.includes('Do not show this claim.'), false);
+  }
 });
 
 test('malformed note answers fail explicitly', () => {
