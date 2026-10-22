@@ -1,4 +1,5 @@
 import { element, appendSources } from './dom.mjs';
+import { apiFetch } from './api-client.mjs';
 import { markAnswerRevealed, recordAttempt, lastAttempt } from './session.mjs';
 
 const LABELS = { supported: 'Supported by these notes', partial: 'Some parts need review', conflicting: 'Possible conflict with the notes',
@@ -56,7 +57,7 @@ export function renderPracticeCard(card, index, { session, notes, onSource, setB
     submit.textContent = 'Checking against your notes…'; input.disabled = true; confidence.disabled = true;
     errorBox.hidden = true; feedback.hidden = true;
     try {
-      const response = await fetch('/api/review', { method: 'POST', headers: { 'content-type': 'application/json' },
+      const response = await apiFetch('/api/review', { method: 'POST', headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ notes, question: card.question, answer, confidence: felt }), signal: AbortSignal.timeout(60000) });
       const review = await response.json();
       if (!response.ok) throw new Error(review.error || 'Could not check this answer. Please try again.');

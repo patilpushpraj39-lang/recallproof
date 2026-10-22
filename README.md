@@ -54,7 +54,7 @@ Review validation: lib/review.mjs
 Browser: AI feedback -> priority note -> retry -> review queue
 ```
 
-The backend binds to loopback only, rejects foreign browser origins and unexpected hostnames, serves only explicitly listed public assets, and never exposes raw provider error responses. This is a local prototype; it has no accounts, durable storage or public deployment hardening.
+The local launcher binds to loopback only. The backend rejects foreign browser origins and unexpected hostnames, serves only explicitly listed public assets, and never exposes raw provider error responses. The hosted adapter additionally requires a presenter code for model requests. This prototype has no user accounts, durable storage or distributed quota enforcement. See [DEPLOYMENT.md](DEPLOYMENT.md) for the hosting setup and its limits.
 
 ## Tests
 

@@ -1,4 +1,5 @@
 import { element, appendSources } from './dom.mjs';
+import { apiFetch } from './api-client.mjs';
 
 export function renderNotesQuestion(container, { notes, setBusy, onSource, onResult }) {
   container.replaceChildren(element('h3', 'section-title', 'Ask your notes'),
@@ -22,7 +23,7 @@ export function renderNotesQuestion(container, { notes, setBusy, onSource, onRes
     if (!question || !setBusy(true)) return;
     error.hidden = true; status.textContent = 'Checking your notes…';
     try {
-      const response = await fetch('/api/ask', { method: 'POST', headers: { 'content-type': 'application/json' },
+      const response = await apiFetch('/api/ask', { method: 'POST', headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ notes, question }), signal: AbortSignal.timeout(60000) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Could not answer this question. Please try again.');

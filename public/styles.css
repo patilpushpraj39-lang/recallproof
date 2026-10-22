@@ -2,6 +2,7 @@
 
 .practice-toolbar { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:12px 0 5px; }
 .ask-panel { border-top:1px solid var(--line); margin-top:24px; padding-top:8px; }
+#demo-access input { box-sizing:border-box; width:100%; padding:12px; border:1px solid var(--line); border-radius:8px; background:var(--white); color:var(--ink); margin-top:8px; font:inherit; }
 .notes-question-form .answer-label { display:block; margin:15px 0 8px; }
 .notes-question-form .notes-question { min-height:75px; height:80px; padding:12px; font-size:12px; margin-bottom:10px; }
 #practice-progress { font-size:10px; line-height:1.6; color:var(--green); }

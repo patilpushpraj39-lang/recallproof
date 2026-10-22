@@ -1,0 +1,7 @@
+work/
+.git/
+.env
+.env.*
+test/
+graphify-out/
+*.log

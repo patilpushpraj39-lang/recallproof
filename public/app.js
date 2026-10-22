@@ -3,12 +3,14 @@ import { renderPracticeCard } from './practice.mjs';
 import { createPracticeSession, practiceProgress, reviewQueue, recordNotesQuestion } from './session.mjs';
 import { buildRevisionReport } from './export.mjs';
 import { renderNotesQuestion } from './ask.mjs';
+import { apiFetch } from './api-client.mjs';
 
 const $ = id => document.getElementById(id);
 const notes = $('notes');
 const generate = $('generate');
 let working = false;
 let configured = false;
+let demoAccessRequired = false;
 let sourceNotes = '';
 let practiceSession = null;
 let onlyFlagged = false;
@@ -25,8 +27,9 @@ Both support indexing: index 0 selects the first item.`;
 
 function updateInput() {
   $('character-count').textContent = `${notes.value.length.toLocaleString()} / 12,000`;
-  generate.disabled = working || !configured || notes.value.trim().length < 60;
+  generate.disabled = working || !configured || (demoAccessRequired && !$('demo-code').value.trim()) || notes.value.trim().length < 60;
 }
+$('demo-code').addEventListener('input', updateInput);
 
 function resetResults() {
   currentPack = null;
@@ -164,7 +167,7 @@ generate.addEventListener('click', async () => {
   $('elapsed').textContent = '0 seconds';
   const timer = setInterval(() => { $('elapsed').textContent = `${Math.floor((Date.now() - started) / 1000)} seconds`; }, 1000);
   try {
-    const response = await fetch('/api/study', {
+    const response = await apiFetch('/api/study', {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ notes: sourceNotes }), signal: AbortSignal.timeout(60000)
     });
@@ -200,10 +203,15 @@ async function checkServer() {
       return;
     }
     configured = status.configured;
+    demoAccessRequired = status.demoAccessRequired === true;
+    $('demo-access').hidden = !demoAccessRequired;
     badge.classList.add(configured ? 'ready' : 'warning');
-    badge.replaceChildren(element('span', 'status-dot'), document.createTextNode(configured ? 'Gemma 4 · Key loaded' : 'API key needed'));
+    badge.replaceChildren(element('span', 'status-dot'), document.createTextNode(demoAccessRequired
+      ? configured ? 'Gemma 4 · Presenter code required' : 'Hosted demo needs configuration'
+      : configured ? 'Gemma 4 · Key loaded' : 'API key needed'));
     if (!configured) {
-      $('error').textContent = 'Start the app with npm start, then enter your API key in the terminal. The key stays on the server.';
+      $('error').textContent = demoAccessRequired ? 'The presenter needs to configure the hosted demo. You can still view the interface.'
+        : 'Start the app with npm start, then enter your API key in the terminal. The key stays on the server.';
       $('error').hidden = false;
     }
   } catch {

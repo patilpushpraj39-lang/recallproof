@@ -1,4 +1,5 @@
 import { createServer } from 'node:http';
+import { createHash, timingSafeEqual } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { AppError, validateNotes, verifyStudyPack } from './lib/evidence.mjs';
 import { MODEL, generateStudyPack } from './lib/gemma.mjs';
@@ -13,7 +14,8 @@ const ASSETS = new Map([
   ['/practice.mjs', ['practice.mjs', 'text/javascript; charset=utf-8']],
   ['/session.mjs', ['session.mjs', 'text/javascript; charset=utf-8']],
   ['/export.mjs', ['export.mjs', 'text/javascript; charset=utf-8']],
-  ['/ask.mjs', ['ask.mjs', 'text/javascript; charset=utf-8']]
+  ['/ask.mjs', ['ask.mjs', 'text/javascript; charset=utf-8']],
+  ['/api-client.mjs', ['api-client.mjs', 'text/javascript; charset=utf-8']]
 ]);
 
 function respondJson(response, status, body) {
@@ -22,6 +24,12 @@ function respondJson(response, status, body) {
 }
 
 async function readBody(request) {
+  if (request.body !== undefined) {
+    const raw = Buffer.isBuffer(request.body) ? request.body.toString('utf8') : typeof request.body === 'string' ? request.body : JSON.stringify(request.body);
+    if (Buffer.byteLength(raw ?? '') > 65536) throw new AppError(413, 'These notes are too large. Please shorten them.');
+    try { return JSON.parse(raw); }
+    catch { throw new AppError(400, 'The request was not valid JSON. Refresh the page and try again.'); }
+  }
   let size = 0;
   const chunks = [];
   for await (const chunk of request) {
@@ -33,7 +41,8 @@ async function readBody(request) {
   catch { throw new AppError(400, 'The request was not valid JSON. Refresh the page and try again.'); }
 }
 
-export function createRecallServer({ apiKey = process.env.GEMINI_API_KEY, generate = generateStudyPack, review = reviewAnswer, ask = answerFromNotes } = {}) {
+export function createRecallServer({ apiKey = process.env.GEMINI_API_KEY, generate = generateStudyPack, review = reviewAnswer, ask = answerFromNotes,
+  publicHosts = [], requireDemoAccess = false, demoAccessCode = '' } = {}) {
   let busy = false;
   const server = createServer(async (request, response) => {
     response.setHeader('cache-control', 'no-store');
@@ -42,14 +51,16 @@ export function createRecallServer({ apiKey = process.env.GEMINI_API_KEY, genera
     response.setHeader('content-security-policy', "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'");
     try {
       const port = server.address()?.port;
-      const allowedHosts = new Set([`127.0.0.1:${port}`, `localhost:${port}`]);
-      if (!allowedHosts.has(request.headers.host)) throw new AppError(403, 'Open this app using its localhost address.');
-      if (request.headers.origin && !new Set([`http://127.0.0.1:${port}`, `http://localhost:${port}`]).has(request.headers.origin)) {
+      const allowedHosts = new Set([...publicHosts, ...(port ? [`127.0.0.1:${port}`, `localhost:${port}`] : [])]);
+      if (!allowedHosts.has(request.headers.host)) throw new AppError(403, 'Open this app using its configured address.');
+      const allowedOrigins = new Set([...publicHosts.map(host => `https://${host}`), ...(port ? [`http://127.0.0.1:${port}`, `http://localhost:${port}`] : [])]);
+      if (request.headers.origin && !allowedOrigins.has(request.headers.origin)) {
         throw new AppError(403, 'This request did not come from the local app.');
       }
       const route = new URL(request.url, 'http://localhost').pathname;
       if (request.method === 'GET' && route === '/api/health') {
-        return respondJson(response, 200, { configured: Boolean(apiKey), model: MODEL, schemaVersion: 3 });
+        return respondJson(response, 200, { configured: Boolean(apiKey) && (!requireDemoAccess || Boolean(demoAccessCode)),
+          demoAccessRequired: requireDemoAccess, model: MODEL, schemaVersion: 3 });
       }
       if (request.method === 'GET' && ASSETS.has(route)) {
         const [file, type] = ASSETS.get(route);
@@ -60,6 +71,12 @@ export function createRecallServer({ apiKey = process.env.GEMINI_API_KEY, genera
       if (request.method !== 'POST' || !['/api/study', '/api/review', '/api/ask'].includes(route)) return respondJson(response, 404, { error: 'Page not found.' });
       if (request.headers['content-type']?.split(';')[0].trim() !== 'application/json') {
         throw new AppError(415, 'Send notes using the study form.');
+      }
+      if (requireDemoAccess) {
+        if (!demoAccessCode) throw new AppError(503, 'This hosted demo needs its presenter access code configured.');
+        const supplied = typeof request.headers['x-demo-code'] === 'string' ? request.headers['x-demo-code'] : '';
+        const hash = value => createHash('sha256').update(value).digest();
+        if (!timingSafeEqual(hash(supplied), hash(demoAccessCode))) throw new AppError(401, 'Enter the presenter access code to use this demo.');
       }
       const body = await readBody(request);
       const input = route === '/api/review' ? validateReviewInput(body) : route === '/api/ask' ? validateQuestionInput(body) : { notes: validateNotes(body?.notes) };
