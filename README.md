@@ -82,7 +82,7 @@ After generating a pack, scroll below the cards to ask another question about th
 
 This feature provides study help and may reveal card answers. Later practice attempts disclose prior use of the notes assistant. The latest five responses are retained in browser memory and included in the text report, including not-covered and withheld outcomes. The questions, like notes and submitted answers, are sent to Google's hosted API. There is no automatic persistence, new dependency, extra service or automatic retry.
 
-Implementation: `POST /api/ask` in `server.mjs` -> `validateQuestionInput` -> `buildQuestionPrompt` -> shared `requestGemmaJson` -> `verifyNoteAnswer` -> original sources. `public/ask.mjs` renders the result, and `public/session.mjs` tracks the assistance context. The previous live generation and feedback tests do not establish live performance of this new route; its live acceptance is pending.
+Implementation: `POST /api/ask` in `server.mjs` -> `validateQuestionInput` -> `buildQuestionPrompt` -> shared `requestGemmaJson` -> `verifyNoteAnswer` -> original sources. `public/ask.mjs` renders the result, and `public/session.mjs` tracks the assistance context. Participant-run screenshots show one correct list/tuple comparison with a citation-coverage gap and one correct not-covered outcome for a Python creator/year question absent from the notes. These examples do not establish general accuracy; see `VALIDATION.md`.
 
 ## Model, dependencies and assistance
 
