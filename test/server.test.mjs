@@ -1,0 +1,81 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { createRecallServer } from '../server.mjs';
+
+const notes = 'A list can be changed after creation. A tuple cannot be changed after creation.';
+const sourcePack = {
+  summary: [{ text: 'Lists can change.', sourceIds: ['S1'] }],
+  questions: [{ question: 'Can tuples change?', answer: 'No.', sourceIds: ['S2'] }]
+};
+
+async function withServer(options, run) {
+  const server = createRecallServer(options);
+  await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
+  const url = `http://127.0.0.1:${server.address().port}`;
+  try { await run(url); }
+  finally { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }
+}
+
+function post(url, body, origin) {
+  return fetch(`${url}/api/study`, { method: 'POST',
+    headers: { 'content-type': 'application/json', ...(origin ? { origin } : {}) }, body });
+}
+
+test('HTTP flow validates evidence and never returns the private API key', async () => {
+  await withServer({ apiKey: 'private-test-key', generate: async () => sourcePack }, async url => {
+    const response = await post(url, JSON.stringify({ notes }), url);
+    assert.equal(response.status, 200);
+    const text = await response.text();
+    assert.equal(text.includes('private-test-key'), false);
+    assert.deepEqual(JSON.parse(text).evidence, { matched: 2, total: 2 });
+    const page = await fetch(url);
+    assert.equal(page.status, 200);
+    assert.match(page.headers.get('content-security-policy'), /script-src 'self'/);
+  });
+});
+
+test('missing credentials and invalid input do not call the model', async () => {
+  let called = false;
+  await withServer({ apiKey: '', generate: async () => { called = true; } }, async url => {
+    assert.equal((await post(url, JSON.stringify({ notes: '' }))).status, 400);
+    assert.equal((await post(url, '{broken')).status, 400);
+    assert.equal((await post(url, JSON.stringify({ notes }))).status, 503);
+    assert.equal(called, false);
+  });
+});
+
+test('foreign browser origins and oversized requests are rejected before generation', async () => {
+  let called = false;
+  await withServer({ apiKey: 'test', generate: async () => { called = true; } }, async url => {
+    assert.equal((await post(url, JSON.stringify({ notes }), 'https://unrelated.example')).status, 403);
+    assert.equal((await post(url, JSON.stringify({ notes: 'x'.repeat(70000) }))).status, 413);
+    assert.equal(called, false);
+  });
+});
+
+test('unexpected backend failures are sanitized and the next request can recover', async () => {
+  let calls = 0;
+  await withServer({ apiKey: 'test', generate: async () => {
+    if (++calls === 1) throw new Error('do not disclose this private-test-key');
+    return sourcePack;
+  } }, async url => {
+    const failure = await post(url, JSON.stringify({ notes }));
+    assert.equal(failure.status, 500);
+    assert.equal((await failure.text()).includes('private-test-key'), false);
+    assert.equal((await post(url, JSON.stringify({ notes }))).status, 200);
+  });
+});
+
+test('overlapping generation requests cannot accidentally spend quota twice', async () => {
+  let release;
+  let notifyStarted;
+  const started = new Promise(resolve => { notifyStarted = resolve; });
+  const wait = new Promise(resolve => { release = resolve; });
+  await withServer({ apiKey: 'test', generate: async () => { notifyStarted(); await wait; return sourcePack; } }, async url => {
+    const first = post(url, JSON.stringify({ notes }));
+    await started;
+    try { assert.equal((await post(url, JSON.stringify({ notes }))).status, 429); }
+    finally { release(); }
+    assert.equal((await first).status, 200);
+  });
+});

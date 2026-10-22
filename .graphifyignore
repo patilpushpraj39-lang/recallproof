@@ -1,0 +1,9 @@
+# Map the application's code, excluding tests, development backups and generated output.
+.git/
+work/
+test/
+node_modules/
+graphify-out/
+.env
+.env.*
+*.log

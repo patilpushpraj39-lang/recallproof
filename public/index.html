@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Turn your study notes into revision questions with inspectable supporting passages, powered by Gemma 4.">
+  <title>RecallProof — Revision with receipts</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" type="module"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="RecallProof home"><span class="brand-icon" aria-hidden="true">r<span>✓</span></span>RecallProof<span class="beta">HACK DAY BUILD</span></a>
+    <span class="model-status" id="model-status" role="status"><span class="status-dot"></span>Connecting to local server</span>
+  </header>
+  <main>
+    <section class="intro" aria-labelledby="page-title">
+      <p class="eyebrow">LESS REREADING. MORE REMEMBERING.</p>
+      <h1 id="page-title">Learn it.<br>Then <span>show your source.</span></h1>
+      <p class="intro-copy">Turn your notes into a short summary and revision cards.<br class="desktop-break"> Reveal an answer. Find its evidence. Keep your own judgment.</p>
+      <div class="steps" aria-label="How it works"><span><b>01</b> Paste notes</span><span><b>02</b> Try recalling</span><span><b>03</b> Check the source</span></div>
+    </section>
+
+    <div class="workspace">
+      <section class="panel notes-panel" aria-labelledby="notes-title">
+        <div class="panel-heading"><div><p class="eyebrow">YOUR SOURCE OF TRUTH</p><h2 id="notes-title">Start with your notes</h2></div><span class="number-tag">01</span></div>
+        <label class="sr-only" for="notes">Study notes</label>
+        <textarea id="notes" maxlength="12000" placeholder="Paste a few factual paragraphs from your notes here…&#10;&#10;Definitions, comparisons and short explanations work well." spellcheck="false" aria-describedby="notes-help"></textarea>
+        <div class="input-meta"><button id="sample" type="button" class="text-button">Try sample notes ↗</button><span id="character-count">0 / 12,000</span></div>
+        <button id="generate" type="button" class="primary-button" disabled>Create my study pack <span aria-hidden="true">→</span></button>
+        <p class="helper" id="notes-help">Gemma aims for three questions. Shorter notes may support fewer.</p>
+        <p class="privacy">Your notes are sent to Google’s Gemini API to run Gemma. This app does not save your notes or API key to disk.</p>
+        <div id="source-panel" class="source-panel" hidden><div class="source-heading"><h3>Evidence in your notes</h3><button id="close-source" type="button" class="text-button">Close</button></div><p id="source-text"></p></div>
+      </section>
+
+      <section class="panel result-panel" aria-labelledby="result-title" aria-busy="false">
+        <div class="panel-heading"><div><p class="eyebrow">YOUR NEXT STUDY SESSION</p><h2 id="result-title">Recall, with receipts</h2></div><span class="number-tag">02</span></div>
+        <div id="error" class="error-message" role="alert" hidden></div>
+        <div id="empty-state" class="empty-state"><div class="paper-stack" aria-hidden="true"><span class="paper-back"></span><div class="paper-front"><span class="mini-check">✓</span><span class="paper-line long"></span><span class="paper-line"></span><span class="paper-line short"></span></div></div><h3>A little less “I think I know this.”</h3><p>Add notes on the left. Your summary and revision cards will appear here.</p><span class="empty-tag">Powered by Gemma 4 · Checked against your notes</span></div>
+        <div id="loading" class="loading-state" role="status" hidden><span class="spinner" aria-hidden="true"></span><h3>Building your study pack</h3><p>Gemma is reading your notes. Then we’ll check its source references and retrieve the original passages.</p><span id="elapsed">0 seconds</span></div>
+        <div id="results" hidden><div class="evidence-banner"><span aria-hidden="true">↳</span><div><strong id="evidence-count"></strong><p>Passages are copied from your notes. Gemma’s interpretation still needs your review.</p></div></div><h3 class="section-title">The essentials</h3><ul id="summary" class="summary-list"></ul><div class="cards-heading"><h3 class="section-title">Your recall cards</h3><span>Think first. Reveal second.</span></div><div id="questions" class="question-list"></div></div>
+      </section>
+    </div>
+    <footer><span>Built for curious minds. Powered by Gemma 4.</span><span>Check the evidence. Question the explanation.</span></footer>
+  </main>
+</body>
+</html>
