@@ -2,6 +2,10 @@
 
 Answer, inspect the evidence, and retry: a small revision coach powered by **Gemma 4**.
 
+**[Live demo](https://recallproof.vercel.app/)** · **[Graphify graph](https://app.graphify.com/recallproof/graph?repo=recallproof)** · **[Graph showcase](#graphify)**
+
+The demo page is public; AI requests require the presenter code, shared privately with intended demo users. The Google API key stays on the server.
+
 Students can get plausible answers from AI without noticing that the explanation goes beyond their notes. RecallProof divides notes into numbered source passages. Gemma chooses source IDs for each generated summary point and answer; the backend validates those IDs and retrieves the original text itself. Items with missing or invalid references are withheld, and students can highlight the original passages.
 
 The practice flow asks students to write an answer and choose whether they feel sure or unsure before revealing a suggestion. Gemma gives notes-based feedback; the student can inspect the original passages, retry the question, and filter to cards flagged for review. A felt-sure answer that receives conflicting or partial feedback gets a review-priority note. This is a prompt for human review, not a verified diagnosis of misunderstanding.
@@ -66,7 +70,20 @@ Automated tests use synthetic data and mocked model responses. They cover invali
 
 ## Graphify
 
-Map the actual project using Graphify. `.graphifyignore` scopes local extraction to application and genuine test code, excluding backups and generated output; hosted indexing can use different coverage. The participant connected this repository to Graphify Cloud and supplied a successful graph-view screenshot reporting 100 nodes and 185 edges (183 extracted and 2 inferred) for the earlier practice upgrade. Those are observed snapshot counts, not a guaranteed current count or a judging score. Confirm the indexed commit and actual relationships before presenting them. Follow the representative's instructions about eligible graph scope and submission.
+**[Explore the interactive Graphify graph](https://app.graphify.com/recallproof/graph?repo=recallproof)**
+
+![RecallProof's actual Graphify code graph, captured October 22, 2026](docs/graphify-graph.png)
+
+The latest completed index observed on **October 22, 2026** reported **132 nodes and 281 edges**: 279 extracted, 2 inferred, 0 synthesized and 0 observed. [View the captured totals](docs/graphify-totals.png). These are snapshot counts from Graphify, not a judging score; later indexing can change them. The indexed commit was not shown in these captures.
+
+### What to show judges
+
+1. Open the graph and fit it to view to introduce the connected code areas.
+2. Select `app.js` to explain the study-pack interface and practice flow. The captured graph lists 27 links for this node.
+3. Search for `verifyStudyPack()` in `lib/evidence.mjs`. Show its connections to `buildSourcePassages()`, `resolveSources()`, the server and genuine tests. This is where source IDs are checked and original passages are retrieved; it does not prove that an AI claim is semantically correct.
+4. Select `server.mjs` to connect the interface to validation and model requests, then return to the live app and demonstrate a source highlight.
+
+The screenshots keep the graph visible in this public repository even if an interactive viewer needs Graphify access. `.graphifyignore` scopes local extraction to application and genuine test code, excluding backups and generated output; hosted indexing can use different coverage. Follow the organizer's instructions for eligible graph scope and submission.
 
 Windows Application Control blocked the local `graphify.exe` launcher. The hosted workflow succeeded without changing that security policy.
 
