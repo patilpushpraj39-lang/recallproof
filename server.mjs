@@ -2,11 +2,15 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { AppError, validateNotes, verifyStudyPack } from './lib/evidence.mjs';
 import { MODEL, generateStudyPack } from './lib/gemma.mjs';
+import { validateReviewInput, reviewAnswer, verifyReview } from './lib/review.mjs';
 
 const ASSETS = new Map([
   ['/', ['index.html', 'text/html; charset=utf-8']],
   ['/styles.css', ['styles.css', 'text/css; charset=utf-8']],
-  ['/app.js', ['app.js', 'text/javascript; charset=utf-8']]
+  ['/app.js', ['app.js', 'text/javascript; charset=utf-8']],
+  ['/dom.mjs', ['dom.mjs', 'text/javascript; charset=utf-8']],
+  ['/practice.mjs', ['practice.mjs', 'text/javascript; charset=utf-8']],
+  ['/session.mjs', ['session.mjs', 'text/javascript; charset=utf-8']]
 ]);
 
 function respondJson(response, status, body) {
@@ -26,7 +30,7 @@ async function readBody(request) {
   catch { throw new AppError(400, 'The request was not valid JSON. Refresh the page and try again.'); }
 }
 
-export function createRecallServer({ apiKey = process.env.GEMINI_API_KEY, generate = generateStudyPack } = {}) {
+export function createRecallServer({ apiKey = process.env.GEMINI_API_KEY, generate = generateStudyPack, review = reviewAnswer } = {}) {
   let busy = false;
   const server = createServer(async (request, response) => {
     response.setHeader('cache-control', 'no-store');
@@ -42,7 +46,7 @@ export function createRecallServer({ apiKey = process.env.GEMINI_API_KEY, genera
       }
       const route = new URL(request.url, 'http://localhost').pathname;
       if (request.method === 'GET' && route === '/api/health') {
-        return respondJson(response, 200, { configured: Boolean(apiKey), model: MODEL, schemaVersion: 2 });
+        return respondJson(response, 200, { configured: Boolean(apiKey), model: MODEL, schemaVersion: 3 });
       }
       if (request.method === 'GET' && ASSETS.has(route)) {
         const [file, type] = ASSETS.get(route);
@@ -50,19 +54,24 @@ export function createRecallServer({ apiKey = process.env.GEMINI_API_KEY, genera
         response.writeHead(200, { 'content-type': type });
         return response.end(content);
       }
-      if (request.method !== 'POST' || route !== '/api/study') return respondJson(response, 404, { error: 'Page not found.' });
+      if (request.method !== 'POST' || !['/api/study', '/api/review'].includes(route)) return respondJson(response, 404, { error: 'Page not found.' });
       if (request.headers['content-type']?.split(';')[0].trim() !== 'application/json') {
         throw new AppError(415, 'Send notes using the study form.');
       }
       const body = await readBody(request);
-      const notes = validateNotes(body?.notes);
+      const input = route === '/api/review' ? validateReviewInput(body) : { notes: validateNotes(body?.notes) };
+      const { notes } = input;
       if (!apiKey) throw new AppError(503, 'The API key is missing. Start the app with npm start and enter your key in the terminal.');
-      if (busy) throw new AppError(429, 'One study pack is already being generated. Please wait.');
+      if (busy) throw new AppError(429, 'A Gemma request is already running. Please wait.');
       busy = true;
       try {
+        if (route === '/api/review') {
+          const rawFeedback = await review({ ...input, apiKey });
+          return respondJson(response, 200, { ...verifyReview(rawFeedback, notes, input.confidence), model: MODEL, schemaVersion: 3 });
+        }
         const pack = await generate({ notes, apiKey });
         const checked = verifyStudyPack(pack, notes);
-        return respondJson(response, 200, { ...checked, model: MODEL, schemaVersion: 2 });
+        return respondJson(response, 200, { ...checked, model: MODEL, schemaVersion: 3 });
       } finally { busy = false; }
     } catch (error) {
       // Do not expose provider responses, API keys, student notes, or stack traces.

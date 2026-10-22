@@ -10,7 +10,7 @@ test('Gemma adapter uses private header authentication and excludes thinking tex
       const request = JSON.parse(options.body);
       const input = JSON.parse(request.contents[0].parts[0].text);
       assert.deepEqual(input.passages, [{ id: 'S1', text: 'test notes' }]);
-      assert.equal(request.systemInstruction.parts[0].text.includes('Do NOT copy, paraphrase or generate quotations'), true);
+      assert.equal(request.systemInstruction.parts[0].text.includes('Do NOT generate quotations'), true);
       assert.match(url, /gemma-4-26b-a4b-it:generateContent$/);
       assert.equal(request.generationConfig.thinkingConfig.thinkingLevel, 'minimal');
       return new Response(JSON.stringify({ candidates: [{ finishReason: 'STOP', content: { parts: [

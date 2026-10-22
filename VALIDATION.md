@@ -21,7 +21,8 @@ This record distinguishes automated synthetic checks from a live Gemma demonstra
 - Narrow-screen layout and broader live failure/limited-note cases.
 - Full manual semantic review of all generated answers and their selected passages; source-reference counts alone are not an accuracy measure.
 - Graphify extraction of this actual project.
-- Public repository, license visibility from an unauthenticated browser, and event submission acceptance.
+- Live acceptance of the answer-feedback-retry upgrade.
+- Event submission acceptance.
 
 ## Demo cases to record honestly
 
@@ -53,6 +54,15 @@ Never present a mocked response or synthetic test as a live Gemma result. Source
 
 - The installed Graphify launcher was blocked by Windows Application Control when invoked by the agent, both in the restricted environment and on an approved unrestricted attempt. The agent did not disable or change that policy.
 - Graphify had previously worked in the participant's VS Code terminal for an unrelated practice fixture. Extraction of this actual application is now being handed to that terminal; no successful actual-project graph is claimed yet.
-- `.graphifyignore` limits the graph to application code, excluding the test directory, development backups, generated graphs and environment files. The separate automated tests remain in the repository.
+- The initial `.graphifyignore` scoped the graph to application code. Following the participant's later report about graph-size judging, it was changed to include the genuine test suite as well. Development backups, generated graphs and environment files remain excluded; approved judging scope is still to be confirmed with the representative.
 - The participant clarified that the organizer has not yet announced an exact submission deadline. Any internal readiness target is not an official event cutoff.
 - The participant's own VS Code PowerShell launch was also blocked. A read-only signing check reported the installed `graphify.exe` launcher as `NotSigned`; Windows Code Integrity event 3077 explicitly recorded this launcher failing signing/policy requirements. These observations establish an OS application-control block, not a campus network problem or a proven package defect. No policy bypass or security-setting change was performed. Vendor/organizer help with an approved installation or hosted workflow remains pending.
+
+## Public repository and practice upgrade
+
+- With the participant's chosen owner, the repository was created at `https://github.com/patilpushpraj39-lang/recallproof`. All 16 initial files were published in commit `600becea2c1fd0985e05d9d0fe070d6f8d161a16`; its Git tree matched the local working project exactly. Anonymous HTTP requests returned 200 for the repository, README and MIT license. The local project was linked to origin/main, with the original local commit retained on master.
+- The participant reported that the Graphify representative described graph size, edges and joints as judging factors. This is participant-supplied event guidance, not an independently obtained complete rubric. The upgrade adds real functionality and dependencies rather than dummy functions or fabricated graph artifacts.
+- Version 0.2 adds typed answer practice, student confidence, source-linked Gemma feedback, a review-priority flag, retries, assisted-attempt context and an in-memory review queue. It uses the existing Gemma model and shared transport; no new service or secret storage is introduced.
+- All 32 current automated tests passed after the upgrade. These use synthetic inputs and mocked provider responses and do not establish live feedback quality.
+- A temporary test server on port 4174 used clearly labelled SIMULATED UI TEST responses, no real key and no external model calls. Browser checks verified answer submission, confidence selection, feedback rendering, exact source highlighting, flagged-card filtering and a retry changing the progress display from one review flag to zero. This is synthetic interface evidence, not a live Gemma demonstration.
+- Live feedback must still be checked with the participant's private key after restarting the app: a correct paraphrase, a reversal of list/tuple properties, and a claim absent from the notes. Source-reference checks cannot prove that Gemma's feedback verdict is correct.

@@ -1,9 +1,15 @@
+import { element } from './dom.mjs';
+import { renderPracticeCard } from './practice.mjs';
+import { createPracticeSession, practiceProgress, reviewQueue } from './session.mjs';
+
 const $ = id => document.getElementById(id);
 const notes = $('notes');
 const generate = $('generate');
 let working = false;
 let configured = false;
 let sourceNotes = '';
+let practiceSession = null;
+let onlyFlagged = false;
 
 const SAMPLE = `Python lists and tuples store items in order.
 A list uses square brackets, for example [10, 20, 30].
@@ -12,24 +18,47 @@ A tuple can be written as (10, 20, 30).
 Once created, a tuple's items cannot be added, removed or replaced.
 Both support indexing: index 0 selects the first item.`;
 
-function element(tag, className, text) {
-  const node = document.createElement(tag);
-  if (className) node.className = className;
-  if (text !== undefined) node.textContent = text;
-  return node;
-}
-
 function updateInput() {
   $('character-count').textContent = `${notes.value.length.toLocaleString()} / 12,000`;
   generate.disabled = working || !configured || notes.value.trim().length < 60;
 }
 
 function resetResults() {
+  practiceSession = null;
+  onlyFlagged = false;
   $('results').hidden = true;
   $('source-panel').hidden = true;
   $('empty-state').hidden = false;
   $('error').hidden = true;
 }
+
+function setPracticeBusy(value) {
+  if (value && working) return false;
+  working = value;
+  notes.disabled = value;
+  $('sample').disabled = value;
+  for (const button of document.querySelectorAll('.check-answer')) {
+    button.disabled = value || !button.closest('form').querySelector('textarea').value.trim();
+  }
+  updateInput();
+  return true;
+}
+
+function updatePracticeProgress() {
+  if (!practiceSession) return;
+  const progress = practiceProgress(practiceSession);
+  $('practice-progress').textContent = `${progress.attempted}/${progress.total} attempted · ${progress.flagged} flagged for review${progress.priority ? ` · ${progress.priority} felt-sure flags` : ''}`;
+  $('review-filter').disabled = !onlyFlagged && progress.flagged === 0;
+}
+
+$('review-filter').addEventListener('click', () => {
+  if (!practiceSession) return;
+  onlyFlagged = !onlyFlagged;
+  const flagged = new Set(reviewQueue(practiceSession));
+  for (const card of document.querySelectorAll('.practice-card')) card.hidden = onlyFlagged && !flagged.has(Number(card.dataset.cardIndex));
+  $('review-filter').textContent = onlyFlagged ? 'Show all cards' : 'Review flagged cards';
+  updatePracticeProgress();
+});
 
 notes.addEventListener('input', () => { resetResults(); updateInput(); });
 $('sample').addEventListener('click', () => {
@@ -57,7 +86,10 @@ function sourceButton(evidence) {
 }
 
 function renderStudyPack(pack) {
-  if (pack.schemaVersion !== 2) throw new Error('The app has been updated. Restart npm start in the terminal, then refresh this page.');
+  if (pack.schemaVersion !== 3) throw new Error('The app has been updated. Restart npm start in the terminal, then refresh this page.');
+  practiceSession = createPracticeSession(pack.questions);
+  onlyFlagged = false;
+  $('review-filter').textContent = 'Review flagged cards';
   $('evidence-count').textContent = `${pack.evidence.matched} of ${pack.evidence.total} items linked to original note passages`;
   $('summary').replaceChildren();
   $('questions').replaceChildren();
@@ -83,22 +115,11 @@ function renderStudyPack(pack) {
         `Card ${index + 1} withheld: Gemma selected a missing or invalid source passage. Try generating again.`));
       return;
     }
-    const details = element('details', 'question-card');
-    const heading = element('summary');
-    heading.append(element('span', 'question-number', String(index + 1).padStart(2, '0')),
-      element('span', 'question-text', card.question), element('span', 'reveal-label', 'Reveal answer +'));
-    const answer = element('div', 'answer-body');
-    answer.append(element('p', 'answer-label', 'SUGGESTED ANSWER'), element('p', 'answer-text', card.answer),
-      element('span', 'evidence-label', 'Original passages · selected by Gemma'));
-    for (const source of card.sources) {
-      const button = sourceButton(source);
-      button.textContent = `View source ${source.id} in notes ↗`;
-      answer.append(element('blockquote', 'evidence-quote', source.text), button);
-    }
-    details.append(heading, answer);
-    $('questions').append(details);
+    $('questions').append(renderPracticeCard(card, index, { session: practiceSession, notes: sourceNotes,
+      onSource: showSource, setBusy: setPracticeBusy, onProgress: updatePracticeProgress }));
   });
   $('results').hidden = false;
+  updatePracticeProgress();
 }
 
 generate.addEventListener('click', async () => {
@@ -147,7 +168,7 @@ async function checkServer() {
     const response = await fetch('/api/health');
     if (!response.ok) throw new Error('Health check failed');
     const status = await response.json();
-    if (status.schemaVersion !== 2) {
+    if (status.schemaVersion !== 3) {
       badge.classList.add('warning');
       badge.replaceChildren(element('span', 'status-dot'), document.createTextNode('Restart the app'));
       $('error').textContent = 'An update is ready. Stop the terminal with Ctrl+C, run npm start again, then refresh this page.';

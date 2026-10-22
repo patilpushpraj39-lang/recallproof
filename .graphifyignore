@@ -1,7 +1,6 @@
-# Map the application's code, excluding tests, development backups and generated output.
+# Map actual application AND test code; exclude backups and generated output.
 .git/
 work/
-test/
 node_modules/
 graphify-out/
 .env

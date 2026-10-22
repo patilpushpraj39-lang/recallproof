@@ -16,8 +16,8 @@ async function withServer(options, run) {
   finally { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }
 }
 
-function post(url, body, origin) {
-  return fetch(`${url}/api/study`, { method: 'POST',
+function post(url, body, origin, route = '/api/study') {
+  return fetch(`${url}${route}`, { method: 'POST',
     headers: { 'content-type': 'application/json', ...(origin ? { origin } : {}) }, body });
 }
 
@@ -31,6 +31,30 @@ test('HTTP flow validates evidence and never returns the private API key', async
     const page = await fetch(url);
     assert.equal(page.status, 200);
     assert.match(page.headers.get('content-security-policy'), /script-src 'self'/);
+  });
+});
+
+test('feedback HTTP route validates evidence and never exposes its private key', async () => {
+  await withServer({ apiKey: 'private-test-key', review: async () => ({ verdict: 'conflicting', feedback: 'The properties are reversed.', sourceIds: ['S1', 'S2'] }) }, async url => {
+    const response = await post(url, JSON.stringify({ notes, question: 'Compare lists and tuples.', answer: 'Tuples can change; lists cannot.', confidence: 'sure' }), url, '/api/review');
+    assert.equal(response.status, 200);
+    const result = await response.json();
+    assert.equal(result.priority, true);
+    assert.equal(result.sources.length, 2);
+    assert.equal(JSON.stringify(result).includes('private-test-key'), false);
+    assert.equal(result.schemaVersion, 3);
+    for (const asset of ['/practice.mjs', '/session.mjs', '/dom.mjs']) assert.equal((await fetch(`${url}${asset}`)).status, 200);
+  });
+});
+
+test('invalid review input and foreign origins do not call the feedback model', async () => {
+  let called = false;
+  const input = { notes, question: 'Compare lists and tuples.', answer: '', confidence: 'sure' };
+  await withServer({ apiKey: 'test', review: async () => { called = true; } }, async url => {
+    assert.equal((await post(url, JSON.stringify(input), url, '/api/review')).status, 400);
+    input.answer = 'An answer';
+    assert.equal((await post(url, JSON.stringify(input), 'https://other.example', '/api/review')).status, 403);
+    assert.equal(called, false);
   });
 });
 
