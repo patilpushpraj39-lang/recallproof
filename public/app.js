@@ -1,7 +1,8 @@
 import { element } from './dom.mjs';
 import { renderPracticeCard } from './practice.mjs';
-import { createPracticeSession, practiceProgress, reviewQueue } from './session.mjs';
+import { createPracticeSession, practiceProgress, reviewQueue, recordNotesQuestion } from './session.mjs';
 import { buildRevisionReport } from './export.mjs';
+import { renderNotesQuestion } from './ask.mjs';
 
 const $ = id => document.getElementById(id);
 const notes = $('notes');
@@ -12,6 +13,8 @@ let sourceNotes = '';
 let practiceSession = null;
 let onlyFlagged = false;
 let currentPack = null;
+const notesQuestionPanel = element('section', 'ask-panel');
+$('results').append(notesQuestionPanel);
 
 const SAMPLE = `Python lists and tuples store items in order.
 A list uses square brackets, for example [10, 20, 30].
@@ -42,6 +45,9 @@ function setPracticeBusy(value) {
   notes.disabled = value;
   $('sample').disabled = value;
   $('download-session').disabled = value || !currentPack;
+  const notesQuestion = $('notes-question');
+  if (notesQuestion) notesQuestion.disabled = value;
+  for (const button of document.querySelectorAll('.ask-submit')) button.disabled = value || !notesQuestion?.value.trim();
   for (const button of document.querySelectorAll('.check-answer')) {
     button.disabled = value || !button.closest('form').querySelector('textarea').value.trim();
   }
@@ -136,6 +142,8 @@ function renderStudyPack(pack) {
   });
   $('results').hidden = false;
   currentPack = pack;
+  renderNotesQuestion(notesQuestionPanel, { notes: sourceNotes, setBusy: setPracticeBusy, onSource: showSource,
+    onResult: entry => recordNotesQuestion(practiceSession, entry) });
   $('session-actions').hidden = false;
   updatePracticeProgress();
 }

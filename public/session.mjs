@@ -1,14 +1,20 @@
 export function createPracticeSession(cards) {
-  return { cards: cards.map(card => ({ question: card.question, enabled: card.evidence.matched, revealed: false, attempts: [] })) };
+  return { notesHelpUsed: false, notesQuestions: [], cards: cards.map(card => ({ question: card.question, enabled: card.evidence.matched, revealed: false, attempts: [] })) };
 }
 
 export function markAnswerRevealed(session, index) {
   session.cards[index].revealed = true;
 }
 
+export function recordNotesQuestion(session, entry) {
+  session.notesHelpUsed = true;
+  session.notesQuestions.push(entry);
+  if (session.notesQuestions.length > 5) session.notesQuestions.shift();
+}
+
 export function recordAttempt(session, index, { answer, confidence, review }) {
   const card = session.cards[index];
-  card.attempts.push({ answer, confidence, review, usedHelp: card.revealed });
+  card.attempts.push({ answer, confidence, review, usedHelp: card.revealed, usedNotesHelp: Boolean(session.notesHelpUsed) });
   if (card.attempts.length > 10) card.attempts.shift();
 }
 

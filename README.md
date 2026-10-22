@@ -76,6 +76,14 @@ Version 0.3 retains a completed pack, checked attempts and drafts if regeneratin
 
 Use **Download session (.txt)** to explicitly save notes, summaries, suggested answers, source passages and the latest ten checked attempts per question as plain text. Unsubmitted drafts are excluded. The report labels model feedback and assistance; it is not an objective grade or evidence of independent mastery. Download generation happens in the browser and makes no extra model request. This is a readable report, not an importable backup; refreshing the page still clears session memory. Keep any report containing private notes private. The key is not included in the report.
 
+## Ask your notes
+
+After generating a pack, scroll below the cards to ask another question about the same notes. Each submission makes one request to Gemma using the shared private backend client. It receives numbered passages and a question supplied as data. The backend retrieves original text for valid source IDs, withholds answers with invalid references, and substitutes the fixed response **Not covered in these notes.** when the model reports that the notes do not answer the question. The coverage decision and meaning of an answer still depend on the model; this is not guaranteed hallucination prevention or proven prompt-injection resistance.
+
+This feature provides study help and may reveal card answers. Later practice attempts disclose prior use of the notes assistant. The latest five responses are retained in browser memory and included in the text report, including not-covered and withheld outcomes. The questions, like notes and submitted answers, are sent to Google's hosted API. There is no automatic persistence, new dependency, extra service or automatic retry.
+
+Implementation: `POST /api/ask` in `server.mjs` -> `validateQuestionInput` -> `buildQuestionPrompt` -> shared `requestGemmaJson` -> `verifyNoteAnswer` -> original sources. `public/ask.mjs` renders the result, and `public/session.mjs` tracks the assistance context. The previous live generation and feedback tests do not establish live performance of this new route; its live acceptance is pending.
+
 ## Model, dependencies and assistance
 
 - Model: [`gemma-4-26b-a4b-it`](https://ai.google.dev/gemma/docs/core/gemma_on_gemini_api), hosted through Google's Gemini API.

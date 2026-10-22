@@ -58,6 +58,26 @@ test('invalid review input and foreign origins do not call the feedback model', 
   });
 });
 
+test('notes questions return retrieved sources and never expose credentials', async () => {
+  await withServer({ apiKey: 'private-test-key', ask: async () => ({ covered: true, answer: 'A list can change.', sourceIds: ['S1'] }) }, async url => {
+    const response = await post(url, JSON.stringify({ notes, question: 'Can a list change?' }), url, '/api/ask');
+    assert.equal(response.status, 200);
+    const text = await response.text();
+    assert.equal(text.includes('private-test-key'), false);
+    assert.equal(JSON.parse(text).sources[0].text, 'A list can be changed after creation.');
+    assert.equal((await fetch(`${url}/ask.mjs`)).status, 200);
+  });
+});
+
+test('invalid notes questions and foreign origins do not call the model', async () => {
+  let calls = 0;
+  await withServer({ apiKey: 'test', ask: async () => { calls++; } }, async url => {
+    assert.equal((await post(url, JSON.stringify({ notes, question: '' }), url, '/api/ask')).status, 400);
+    assert.equal((await post(url, JSON.stringify({ notes, question: 'Question?' }), 'https://unrelated.example', '/api/ask')).status, 403);
+    assert.equal(calls, 0);
+  });
+});
+
 test('missing credentials and invalid input do not call the model', async () => {
   let called = false;
   await withServer({ apiKey: '', generate: async () => { called = true; } }, async url => {
@@ -98,7 +118,10 @@ test('overlapping generation requests cannot accidentally spend quota twice', as
   await withServer({ apiKey: 'test', generate: async () => { notifyStarted(); await wait; return sourcePack; } }, async url => {
     const first = post(url, JSON.stringify({ notes }));
     await started;
-    try { assert.equal((await post(url, JSON.stringify({ notes }))).status, 429); }
+    try {
+      assert.equal((await post(url, JSON.stringify({ notes }))).status, 429);
+      assert.equal((await post(url, JSON.stringify({ notes, question: 'Can a list change?' }), url, '/api/ask')).status, 429);
+    }
     finally { release(); }
     assert.equal((await first).status, 200);
   });

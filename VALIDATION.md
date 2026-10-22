@@ -83,3 +83,18 @@ Never present a mocked response or synthetic test as a live Gemma result. Source
 - Provider HTTP status categories are shown without copying diagnostic bodies. A previous generic error cannot be retroactively attributed to a particular status.
 - All 35 automated tests passed, including new credential-exclusion/report and provider-status checks. These use synthetic inputs and mocked providers.
 - On a labelled synthetic preview at port 4174, browser checks confirmed that a forced regeneration error left the existing summary, questions, typed answer, feedback and progress intact. A correction while viewing flagged cards cleared the flag and restored all three cards. The export button was clicked; the browser's downloaded-file arrival has not yet been independently confirmed. The report builder contents were verified by automated tests.
+
+## Subsequent participant confirmations
+
+- The participant supplied a screenshot of `recallproof-session.txt` opened in Notepad containing original notes, summaries and source passages. A later screenshot showed two checked attempts separately recorded with unsure/sure confidence, conflicting feedback and the original S3/S5 passages. These establish participant-run file arrival and visible report content; no general filesystem or private-file audit was performed.
+- A real confident wrong answer showed the selected sure confidence, one felt-sure flag, the review-priority message and the original supporting passages. This closes the earlier pending confidence-warning example, not broad semantic evaluation.
+- A later Graphify graph-view screenshot reported 104 nodes and 198 edges: 196 extracted, 2 inferred, zero synthesized and zero observed. Selected nodes showed `app.js` with 21 connections and `verifyStudyPack()` with 9 connections in the loaded graph. These remain participant-provided snapshot observations with indexed commit and complete edge-type coverage unverified.
+
+## Version 0.4 notes-question addition
+
+- Fourteen existing files were backed up under ignored `work/before-ask-notes/` and verified by SHA-256 before editing.
+- Added a bounded question form and `/api/ask`, sharing model transport, input/origin checks and the one-request concurrency gate. Model-reported coverage false produces a fixed not-covered response and discards any accompanying outside facts. Claimed covered answers with invalid source IDs are withheld. Coverage and semantic correctness still depend on the model.
+- Later practice attempts retain a study-help disclosure when the notes assistant was consulted; the latest five responses are included in the explicit session export. This does not claim independent mastery.
+- All 46 automated tests passed. New checks cover question validation, original-source retrieval, not-covered behavior, malformed output, invalid references, the semantic limitation, question-as-data prompt construction, HTTP protections, concurrency, help context and export content. They use mocked providers; they do not prove model abstention or injection resistance.
+- A labelled synthetic browser preview on 4174 checked a linked answer, opening its original passage, not-covered output with no outside facts displayed, invalid-source withholding, and a later practice attempt's help disclosure. No real key or external model call was used.
+- Live acceptance of Ask your notes remains pending after restart: ask a covered comparison, then a question absent from the notes, inspect actual output and its source passages. The new report section also needs participant inspection. The prior graph counts predate this addition.

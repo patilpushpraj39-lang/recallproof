@@ -1,10 +1,10 @@
 {
   "name": "recallproof",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
   "description": "Evidence-linked revision cards powered by Gemma 4.",
-  "scripts": { "start": "node start.mjs", "test": "node --test test/evidence.test.mjs test/gemma.test.mjs test/server.test.mjs test/review.test.mjs test/session.test.mjs test/export.test.mjs" },
+  "scripts": { "start": "node start.mjs", "test": "node --test test/evidence.test.mjs test/gemma.test.mjs test/server.test.mjs test/review.test.mjs test/session.test.mjs test/export.test.mjs test/ask.test.mjs" },
   "engines": { "node": ">=22" },
   "license": "MIT"
 }

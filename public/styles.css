@@ -1,6 +1,9 @@
 :root{--ink:#20372e;--muted:#6e776e;--paper:#f6f5ee;--white:#fffefa;--green:#25654e;--lime:#dceaa5;--line:#e3e5d9;--warning:#93611d;--red:#9d3535;font-family:Inter,"Segoe UI",Arial,sans-serif;color:var(--ink);background:var(--paper);font-synthesis:none}
 
 .practice-toolbar { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:12px 0 5px; }
+.ask-panel { border-top:1px solid var(--line); margin-top:24px; padding-top:8px; }
+.notes-question-form .answer-label { display:block; margin:15px 0 8px; }
+.notes-question-form .notes-question { min-height:75px; height:80px; padding:12px; font-size:12px; margin-bottom:10px; }
 #practice-progress { font-size:10px; line-height:1.6; color:var(--green); }
 .practice-disclaimer { font-size:10px; line-height:1.6; color:var(--muted); margin:5px 0 18px; }
 .practice-card { border:1px solid var(--line); border-radius:11px; padding:17px; margin-bottom:16px; }

@@ -4,12 +4,13 @@ import { markAnswerRevealed, recordAttempt, lastAttempt } from './session.mjs';
 const LABELS = { supported: 'Supported by these notes', partial: 'Some parts need review', conflicting: 'Possible conflict with the notes',
   not_covered: 'No support found in these notes', uncertain: 'Needs your review' };
 
-export function renderFeedback(container, review, usedHelp, onSource) {
+export function renderFeedback(container, review, usedHelp, onSource, usedNotesHelp = false) {
   container.replaceChildren(element('span', 'feedback-label', 'GEMMA FEEDBACK · NOT AN OBJECTIVE GRADE'),
     element('h4', '', LABELS[review.verdict]), element('p', '', review.feedback));
   container.className = `answer-feedback feedback-${review.verdict}`;
   if (review.priority) container.append(element('p', 'priority-note', 'Review priority: you felt sure, but Gemma flagged something to revisit. Check the passages yourself.'));
   if (usedHelp) container.append(element('p', 'help-note', 'You revealed the suggested answer before this attempt. This was practice with help.'));
+  if (usedNotesHelp) container.append(element('p', 'help-note', 'You used Ask your notes earlier in this session. This attempt followed study help.'));
   appendSources(container, review.sources, onSource);
   container.hidden = false;
 }
@@ -51,6 +52,7 @@ export function renderPracticeCard(card, index, { session, notes, onSource, setB
     const felt = confidence.value;
     // Capture reveal state before the network request, so peeking later cannot rewrite history.
     const usedHelp = session.cards[index].revealed;
+    const usedNotesHelp = Boolean(session.notesHelpUsed);
     submit.textContent = 'Checking against your notes…'; input.disabled = true; confidence.disabled = true;
     errorBox.hidden = true; feedback.hidden = true;
     try {
@@ -62,7 +64,8 @@ export function renderPracticeCard(card, index, { session, notes, onSource, setB
       recordAttempt(session, index, { answer, confidence: felt, review });
       // The request-start snapshot is the correct practice context for this attempt.
       lastAttempt(session, index).usedHelp = usedHelp;
-      renderFeedback(feedback, review, usedHelp, onSource);
+      lastAttempt(session, index).usedNotesHelp = usedNotesHelp;
+      renderFeedback(feedback, review, usedHelp, onSource, usedNotesHelp);
       retry.hidden = false;
       onProgress();
     } catch (error) {

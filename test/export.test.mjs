@@ -35,3 +35,14 @@ test('report distinguishes unattempted questions, model feedback and withheld co
   assert.match(report, /not objective grades/);
   assert.match(report, /Unsubmitted drafts are not included/);
 });
+
+test('report includes notes-assistant responses and separates helped attempts', () => {
+  const data = fixture();
+  data.session.notesQuestions.push({ question: 'Who created Python?', result: { answer: 'Not covered in these notes.', covered: false, withheld: false, sources: [] } });
+  data.session.notesHelpUsed = true;
+  recordAttempt(data.session, 0, { answer: 'No.', confidence: 'sure', review: { verdict: 'supported', feedback: 'Supported.', sources: [] } });
+  const report = buildRevisionReport(data);
+  assert.match(report, /Notes assistant used before attempt: yes/);
+  assert.match(report, /Question: Who created Python\?/);
+  assert.match(report, /Gemma response: Not covered in these notes\./);
+});

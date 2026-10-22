@@ -23,11 +23,19 @@ export function buildRevisionReport({ notes, pack, session }) {
     attempts.forEach((attempt, attemptIndex) => {
       lines.push('', `Checked attempt ${attemptIndex + 1}`, `Your answer: ${attempt.answer}`,
         `Confidence: ${attempt.confidence}`, `Suggested answer revealed before attempt: ${attempt.usedHelp ? 'yes' : 'no'}`,
+        `Notes assistant used before attempt: ${attempt.usedNotesHelp ? 'yes' : 'no'}`,
         `AI feedback label: ${attempt.review.verdict}`, `AI feedback: ${attempt.review.feedback}`);
       addSources(attempt.review.sources);
     });
   });
-  lines.push('', 'Only the latest 10 checked attempts per question are kept in this session.',
+  lines.push('', 'ASK YOUR NOTES — STUDY HELP');
+  if (!session.notesQuestions?.length) lines.push('No notes-assistant responses recorded.');
+  for (const entry of session.notesQuestions ?? []) {
+    lines.push('', `Question: ${entry.question}`, `Gemma response: ${entry.result.answer}`,
+      `Marked covered: ${entry.result.covered ? 'yes' : 'no'}`, `Withheld: ${entry.result.withheld ? 'yes' : 'no'}`);
+    addSources(entry.result.sources);
+  }
+  lines.push('', 'Only the latest 10 checked attempts per card and 5 notes-assistant responses are kept in this session.',
     'This is a user-downloaded text report, not a live API response or a verified learning score.');
   return lines.join('\n');
 }

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createPracticeSession, recordAttempt, markAnswerRevealed, lastAttempt, reviewQueue, practiceProgress } from '../public/session.mjs';
+import { createPracticeSession, recordAttempt, markAnswerRevealed, lastAttempt, reviewQueue, practiceProgress, recordNotesQuestion } from '../public/session.mjs';
 
 const cards = [{ question: 'Question one?', evidence: { matched: true } }, { question: null, evidence: { matched: false } }];
 
@@ -32,4 +32,17 @@ test('a new note session starts without another session’s answers or flags', (
   const second = createPracticeSession(cards);
   assert.equal(lastAttempt(second, 0), null);
   assert.equal(practiceProgress(second).flagged, 0);
+});
+
+test('notes-assistant history is bounded and records study help only for later attempts', () => {
+  const session = createPracticeSession(cards);
+  const attempt = { answer: 'an answer', confidence: 'unsure', review: { needsReview: false } };
+  recordAttempt(session, 0, attempt);
+  for (let n = 0; n < 6; n++) recordNotesQuestion(session, { question: `Question ${n}`, result: { covered: false } });
+  recordAttempt(session, 0, attempt);
+  assert.equal(session.cards[0].attempts[0].usedNotesHelp, false);
+  assert.equal(lastAttempt(session, 0).usedNotesHelp, true);
+  assert.equal(session.notesQuestions.length, 5);
+  assert.equal(session.notesQuestions[0].question, 'Question 1');
+  assert.deepEqual(createPracticeSession(cards).notesQuestions, []);
 });
